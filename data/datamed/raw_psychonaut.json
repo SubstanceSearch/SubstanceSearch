@@ -51669,7 +51669,7 @@
     "unsafeInteractions": null
   },
   {
-    "addictionPotential": null,
+    "addictionPotential": "moderately addictive with a high potential for abuse",
     "commonNames": [
       "OxyContin",
       "Oxy",
@@ -51724,10 +51724,6 @@
       }
     ],
     "effects": [
-      {
-        "name": "Auditory distortion",
-        "url": "https://psychonautwiki.org/wiki/Auditory_distortion"
-      },
       {
         "name": "Nausea",
         "url": "https://psychonautwiki.org/wiki/Nausea"
@@ -51819,10 +51815,6 @@
       {
         "name": "Decreased libido",
         "url": "https://psychonautwiki.org/wiki/Decreased_libido"
-      },
-      {
-        "name": "Auditory acuity suppression",
-        "url": "https://psychonautwiki.org/wiki/Auditory_acuity_suppression"
       },
       {
         "name": "Orgasm depression",
