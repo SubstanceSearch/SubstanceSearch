@@ -859,6 +859,9 @@
 
     <script>
     function renderTimeChart() {
+        // TODO: Add toggle for enabling/disabling the display of after-effects in the chart
+        const shouldDisplayAfterEffects = false;
+
         var ctx = document.getElementById('timeChart').getContext('2d');
 
         // Get timing data
@@ -958,8 +961,6 @@
             }
 
             // Process after-effects with gradual decline
-            // TODO: Add toggle for enabling/disabling the display of after-effects in the chart
-            const shouldDisplayAfterEffects = false;
             if (shouldDisplayAfterEffects && timingData.aftereffects && (timingData.aftereffects[roa] || timingData.aftereffects.value)) {
                 let aftereffects = timingData.aftereffects[roa] ?
                     parseTimeRange(timingData.aftereffects[roa].value) :
