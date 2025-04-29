@@ -884,6 +884,7 @@
         function convertToMinutes(value, unit) {
             if (!value || !unit) return 0;
             switch(unit.toLowerCase()) {
+                case 'seconds': return value / 60;
                 case 'hours': return value * 60;
                 case 'days': return value * 24 * 60;
                 case 'weeks': return value * 7 * 24 * 60;
@@ -953,7 +954,9 @@
             }
 
             // Process after-effects with gradual decline
-            if (timingData.aftereffects && (timingData.aftereffects[roa] || timingData.aftereffects.value)) {
+            // TODO: Add toggle for enabling/disabling the display of after-effects in the chart
+            const shouldDisplayAfterEffects = false;
+            if (shouldDisplayAfterEffects && timingData.aftereffects && (timingData.aftereffects[roa] || timingData.aftereffects.value)) {
                 let aftereffects = timingData.aftereffects[roa] ?
                     parseTimeRange(timingData.aftereffects[roa].value) :
                     parseTimeRange(timingData.aftereffects.value.value);
