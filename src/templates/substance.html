@@ -635,21 +635,35 @@
 
                             // Create gradient from barStartPixel to barEndPixel
                             var gradient = ctx.createLinearGradient(barStartPixel, 0, barEndPixel, 0);
-
                             var totalDoseRange = barEndValue - barStartValue;
+
+                            const minDose = Math.min(...segments.map(s => s.startDose));
+                            const maxDose = Math.max(...segments.map(s => s.endDose));
 
                             segments.forEach(function (segment) {
                                 var startPos = (segment.startDose - barStartValue) / totalDoseRange;
                                 var endPos = (segment.endDose - barStartValue) / totalDoseRange;
-
                                 var color = doseColors[segment.doseLevel];
 
                                 // Clamp positions between 0 and 1
                                 startPos = Math.max(0, Math.min(1, startPos));
                                 endPos = Math.max(0, Math.min(1, endPos));
 
-                                gradient.addColorStop(startPos, color);
-                                gradient.addColorStop(endPos, color);
+                                // start of segment
+                                if (segment.startDose === minDose) {
+                                    // start of segment (fade in)
+                                    gradient.addColorStop(Math.max(0, startPos - (endPos - startPos) / 2), bodyStyles.getPropertyValue('--chart-transparent'));
+                                    gradient.addColorStop(startPos, color);
+                                    gradient.addColorStop(endPos, color);
+                                } else if (segment.endDose === maxDose) {
+                                    // end of segment (fade out)
+                                    gradient.addColorStop(startPos, color);
+                                    gradient.addColorStop(endPos - ((endPos - startPos) / 2), color);
+                                    gradient.addColorStop(endPos, bodyStyles.getPropertyValue('--chart-transparent'));
+                                } else {
+                                    gradient.addColorStop(startPos, color);
+                                    gradient.addColorStop(endPos, color);
+                                }
                             });
 
                             return gradient;
@@ -764,11 +778,7 @@
 
                 doseLevels.forEach(function (level) {
                     // only add header if there's at least one cell with data
-
-                    if (!roas.some(roa => {
-                      console.log(`[${roa}][${level}]`, parsedDoseData[roa][level])
-                      return parsedDoseData[roa][level]
-                    })) return;
+                    if (!roas.some(roa => parsedDoseData[roa][level])) return;
 
                     var th = document.createElement('th');
                     th.textContent = level;
