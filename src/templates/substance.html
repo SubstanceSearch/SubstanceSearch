@@ -59,44 +59,44 @@
             <p>{{ substance['properties']['summary'] }}</p>
         {% endif %}
 
-        {% if substance.get('dosage') %}
-            <!-- Dose Information -->
-            <div class="dose-info-container">
-                <!-- WARNING Banner -->
-                {% if substance['properties'].get('warning') or substance['properties'].get('avoid') %}
-                    <div class="warning-banner">
-                    {% if substance['properties'].get('warning') %}
-                        ⚠️ WARNING: {{ substance['properties']['warning'] }}
-                    {% endif %}
-                    {% if substance['properties'].get('avoid') %}
-                        ⚠️ AVOID: {{ substance['properties']['avoid'] }}
-                    {% endif %}
-                    </div>
-                {% endif %}
-
-                <!-- NOTE Banner -->
-                {% if substance['properties'].get('note') %}
-                    <div class="note-banner">
-                        ⚠️ {{ substance['properties']['note'] }}
-                    </div>
-                {% endif %}
-
-                <!-- Dosage Chart and Table Section -->
-                <h2>Dose Information</h2>
-                <div class="chart-table-container">
-                    <div class="chart-container">
-                        <canvas id="doseChart" style="max-height: 250px; width: 100%;"></canvas>
-                        <div id="doseLegend" class="dose-legend"></div>
-                    </div>
-                    <div class="table-container">
-                        <table>
-                            <thead id="doseTableHead"></thead>
-                            <tbody id="doseTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+        <!-- WARNING Banner -->
+        {% if substance['properties'].get('warning') or substance['properties'].get('avoid') %}
+            <div class="warning-banner">
+            {% if substance['properties'].get('warning') %}
+                ⚠️ WARNING: {{ substance['properties']['warning'] }}
+            {% endif %}
+            {% if substance['properties'].get('avoid') %}
+                ⚠️ AVOID: {{ substance['properties']['avoid'] }}
+            {% endif %}
             </div>
         {% endif %}
+
+        <!-- NOTE Banner -->
+        {% if substance['properties'].get('note') %}
+            <div class="note-banner">
+                ⚠️ {{ substance['properties']['note'] }}
+            </div>
+        {% endif %}
+
+        <!-- Dose chart & table -->
+        {% if substance.get('dosage', {}).get('routes') %}
+        <div class="dose-info-container">
+            <h2>Dose Information</h2>
+            <div class="chart-table-container">
+                <div class="chart-container">
+                    <canvas id="doseChart" style="max-height: 250px; width: 100%;"></canvas>
+                    <div id="doseLegend" class="dose-legend"></div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead id="doseTableHead"></thead>
+                        <tbody id="doseTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Onset, Duration & After-effects -->
         <div class="onset-duration-container">
             <div class="onset-duration-box">
@@ -921,9 +921,11 @@
                 let onset = parseTimeRange(timingData.onset[roa].value);
                 if (onset) {
                     let onsetMinutes = convertToMinutes(onset.max, timingData.onset[roa].unit);
+
                     // Create smooth onset curve with sigmoid-like function
                     for (let i = 0; i <= 20; i++) {
                         let x = (onsetMinutes * i) / 20;
+
                         // Modified sigmoid function for smoother onset
                         let progress = i / 20;
                         let y = peakIntensity / (1 + Math.exp(-12 * (progress - 0.5)));
@@ -939,12 +941,14 @@
                 let duration = timingData.duration[roa] ?
                     parseTimeRange(timingData.duration[roa].value) :
                     parseTimeRange(timingData.duration.value.value);
+
                 let unit = timingData.duration[roa] ?
                     timingData.duration[roa].unit :
                     timingData.duration.value.unit;
 
                 if (duration) {
                     let durationMinutes = convertToMinutes(duration.max, unit);
+
                     // Add plateau points - just two points for a straight line
                     dataPoints.push({x: timeOffset, y: peakIntensity});
                     dataPoints.push({x: timeOffset + durationMinutes, y: peakIntensity});
@@ -960,12 +964,14 @@
                 let aftereffects = timingData.aftereffects[roa] ?
                     parseTimeRange(timingData.aftereffects[roa].value) :
                     parseTimeRange(timingData.aftereffects.value.value);
+
                 let unit = timingData.aftereffects[roa] ?
                     timingData.aftereffects[roa].unit :
                     timingData.aftereffects.value.unit;
 
                 if (aftereffects) {
                     let afterMinutes = convertToMinutes(aftereffects.max, unit);
+
                     // Create linear decline
                     dataPoints.push({x: timeOffset, y: peakIntensity});
                     dataPoints.push({x: timeOffset + afterMinutes, y: 0});
@@ -986,7 +992,15 @@
             }
         });
 
+        // double check there's any data prior to creation
+        const chartElement = document.querySelector('.time-course-container');
+        if (!datasets.length) {
+          chartElement.style.display = 'none';
+          return;
+        }
+
         // Create the chart
+        chartElement.style.display = 'block';
         new Chart(ctx, {
             type: 'line',
             data: {
@@ -1198,6 +1212,7 @@
         background: var(--background-secondary);
         border-radius: 0.75rem;
         padding: 1.5rem;
+        padding-left: 0;
         margin: 1rem 0;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
