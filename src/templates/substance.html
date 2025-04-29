@@ -13,7 +13,7 @@
         <!-- Header Row -->
         <div class="page-header">
             <h1>{{ substance.pretty_name }}</h1>
-            
+
             <!-- Data Source Switcher -->
             <div class="data-source-switcher">
                 <label for="data-source">Data Source</label>
@@ -273,7 +273,7 @@
         <!-- Studies & Links Section -->
         {% if substance.get('sources', {}).get('_general') or substance.get('links') %}
             <h2>Studies & References</h2>
-            
+
             {% if substance.get('links', {}).get('research') %}
             <button class="collapsible">📚 Research Papers</button>
             <div class="content sources-section">
@@ -553,7 +553,7 @@
 
                         boundaries.add(parsedDose.low);
                         boundaries.add(parsedDose.high);
-                        
+
                         overallMaxDose = Math.max(overallMaxDose, parsedDose.high);
                     }
                 });
@@ -561,7 +561,7 @@
                 // Build segments
                 var sortedBoundaries = Array.from(boundaries).sort((a, b) => a - b);
                 var segments = [];
-                
+
                 for (var i = 0; i < sortedBoundaries.length - 1; i++) {
                     var startDose = sortedBoundaries[i];
                     var endDose = sortedBoundaries[i + 1];
@@ -763,6 +763,13 @@
                 headerRow.appendChild(roaHeader);
 
                 doseLevels.forEach(function (level) {
+                    // only add header if there's at least one cell with data
+
+                    if (!roas.some(roa => {
+                      console.log(`[${roa}][${level}]`, parsedDoseData[roa][level])
+                      return parsedDoseData[roa][level]
+                    })) return;
+
                     var th = document.createElement('th');
                     th.textContent = level;
                     headerRow.appendChild(th);
@@ -777,21 +784,26 @@
                     row.appendChild(roaCell);
 
                     doseLevels.forEach(function (level) {
+                        // only add cell if there's at least one value for this dose level across all ROAs
+                        if (!roas.some(r => parsedDoseData[r][level])) return;
+
                         var dose = parsedDoseData[roa][level];
                         var cell = document.createElement('td');
-                        cell.style.backgroundColor = doseColors[level];
-                        cell.style.color = 'var(--text);';
-                        cell.style.padding = '5px';
-                        cell.style.textAlign = 'center';
 
                         if (dose) {
                             cell.textContent = dose.display;
+                            cell.style.backgroundColor = doseColors[level];
                         } else {
                             cell.textContent = 'No data';
                             cell.style.backgroundColor = 'var(--background-darker)';
                         }
+
+                        cell.style.color = 'var(--text)';
+                        cell.style.padding = '5px';
+                        cell.style.textAlign = 'center';
                         row.appendChild(cell);
                     });
+
                     doseTableBody.appendChild(row);
                 });
             }
@@ -838,11 +850,11 @@
     <script>
     function renderTimeChart() {
         var ctx = document.getElementById('timeChart').getContext('2d');
-        
+
         // Get timing data
         var timingData = JSON.parse('{{ substance.get("timing", {}) | tojson | safe }}');
         var roas = Object.keys(timingData.onset || {}).filter(roa => roa !== 'value');
-        
+
         // Colors for different phases
         const bodyStyles = getComputedStyle(document.body);
         var phaseColors = {
@@ -892,7 +904,7 @@
         roas.forEach((roa, index) => {
             let dataPoints = [];
             let timeOffset = 0;
-            
+
             // Process onset
             if (timingData.onset && timingData.onset[roa]) {
                 let onset = parseTimeRange(timingData.onset[roa].value);
@@ -913,13 +925,13 @@
 
             // Process duration
             if (timingData.duration && (timingData.duration[roa] || timingData.duration.value)) {
-                let duration = timingData.duration[roa] ? 
+                let duration = timingData.duration[roa] ?
                     parseTimeRange(timingData.duration[roa].value) :
                     parseTimeRange(timingData.duration.value.value);
-                let unit = timingData.duration[roa] ? 
+                let unit = timingData.duration[roa] ?
                     timingData.duration[roa].unit :
                     timingData.duration.value.unit;
-                
+
                 if (duration) {
                     let durationMinutes = convertToMinutes(duration.max, unit);
                     // Add plateau points - just two points for a straight line
@@ -932,13 +944,13 @@
 
             // Process after-effects with gradual decline
             if (timingData.aftereffects && (timingData.aftereffects[roa] || timingData.aftereffects.value)) {
-                let aftereffects = timingData.aftereffects[roa] ? 
+                let aftereffects = timingData.aftereffects[roa] ?
                     parseTimeRange(timingData.aftereffects[roa].value) :
                     parseTimeRange(timingData.aftereffects.value.value);
-                let unit = timingData.aftereffects[roa] ? 
+                let unit = timingData.aftereffects[roa] ?
                     timingData.aftereffects[roa].unit :
                     timingData.aftereffects.value.unit;
-                
+
                 if (aftereffects) {
                     let afterMinutes = convertToMinutes(aftereffects.max, unit);
                     // Create linear decline
@@ -1137,11 +1149,11 @@
             font-size: 2rem;
             text-align: left;
         }
-        
+
         .data-source-switcher {
             padding: 0.5rem 0.75rem;
         }
-        
+
         .data-source-switcher select {
             min-width: 80px;
         }
@@ -1303,7 +1315,7 @@
             margin: 0.5rem 0;
             padding: 1rem;
         }
-        
+
         button.collapsible.active + .content {
             padding: 1rem;
         }
