@@ -13,7 +13,7 @@
         <!-- Header Row -->
         <div class="page-header">
             <h1>{{ substance.pretty_name }}</h1>
-            
+
             <!-- Data Source Switcher -->
             <div class="data-source-switcher">
                 <label for="data-source">Data Source</label>
@@ -59,44 +59,44 @@
             <p>{{ substance['properties']['summary'] }}</p>
         {% endif %}
 
-        {% if substance.get('dosage') %}
-            <!-- Dose Information -->
-            <div class="dose-info-container">
-                <!-- WARNING Banner -->
-                {% if substance['properties'].get('warning') or substance['properties'].get('avoid') %}
-                    <div class="warning-banner">
-                    {% if substance['properties'].get('warning') %}
-                        ⚠️ WARNING: {{ substance['properties']['warning'] }}
-                    {% endif %}
-                    {% if substance['properties'].get('avoid') %}
-                        ⚠️ AVOID: {{ substance['properties']['avoid'] }}
-                    {% endif %}
-                    </div>
-                {% endif %}
-
-                <!-- NOTE Banner -->
-                {% if substance['properties'].get('note') %}
-                    <div class="note-banner">
-                        ⚠️ {{ substance['properties']['note'] }}
-                    </div>
-                {% endif %}
-
-                <!-- Dosage Chart and Table Section -->
-                <h2>Dose Information</h2>
-                <div class="chart-table-container">
-                    <div class="chart-container">
-                        <canvas id="doseChart" style="max-height: 250px; width: 100%;"></canvas>
-                        <div id="doseLegend" class="dose-legend"></div>
-                    </div>
-                    <div class="table-container">
-                        <table>
-                            <thead id="doseTableHead"></thead>
-                            <tbody id="doseTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+        <!-- WARNING Banner -->
+        {% if substance['properties'].get('warning') or substance['properties'].get('avoid') %}
+            <div class="warning-banner">
+            {% if substance['properties'].get('warning') %}
+                ⚠️ WARNING: {{ substance['properties']['warning'] }}
+            {% endif %}
+            {% if substance['properties'].get('avoid') %}
+                ⚠️ AVOID: {{ substance['properties']['avoid'] }}
+            {% endif %}
             </div>
         {% endif %}
+
+        <!-- NOTE Banner -->
+        {% if substance['properties'].get('note') %}
+            <div class="note-banner">
+                ⚠️ {{ substance['properties']['note'] }}
+            </div>
+        {% endif %}
+
+        <!-- Dose chart & table -->
+        {% if substance.get('dosage', {}).get('routes') %}
+        <div class="dose-info-container">
+            <h2>Dose Information</h2>
+            <div class="chart-table-container">
+                <div class="chart-container">
+                    <canvas id="doseChart" style="max-height: 250px; width: 100%;"></canvas>
+                    <div id="doseLegend" class="dose-legend"></div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead id="doseTableHead"></thead>
+                        <tbody id="doseTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Onset, Duration & After-effects -->
         <div class="onset-duration-container">
             <div class="onset-duration-box">
@@ -273,7 +273,7 @@
         <!-- Studies & Links Section -->
         {% if substance.get('sources', {}).get('_general') or substance.get('links') %}
             <h2>Studies & References</h2>
-            
+
             {% if substance.get('links', {}).get('research') %}
             <button class="collapsible">📚 Research Papers</button>
             <div class="content sources-section">
@@ -553,7 +553,7 @@
 
                         boundaries.add(parsedDose.low);
                         boundaries.add(parsedDose.high);
-                        
+
                         overallMaxDose = Math.max(overallMaxDose, parsedDose.high);
                     }
                 });
@@ -561,7 +561,7 @@
                 // Build segments
                 var sortedBoundaries = Array.from(boundaries).sort((a, b) => a - b);
                 var segments = [];
-                
+
                 for (var i = 0; i < sortedBoundaries.length - 1; i++) {
                     var startDose = sortedBoundaries[i];
                     var endDose = sortedBoundaries[i + 1];
@@ -635,21 +635,35 @@
 
                             // Create gradient from barStartPixel to barEndPixel
                             var gradient = ctx.createLinearGradient(barStartPixel, 0, barEndPixel, 0);
-
                             var totalDoseRange = barEndValue - barStartValue;
+
+                            const minDose = Math.min(...segments.map(s => s.startDose));
+                            const maxDose = Math.max(...segments.map(s => s.endDose));
 
                             segments.forEach(function (segment) {
                                 var startPos = (segment.startDose - barStartValue) / totalDoseRange;
                                 var endPos = (segment.endDose - barStartValue) / totalDoseRange;
-
                                 var color = doseColors[segment.doseLevel];
 
                                 // Clamp positions between 0 and 1
                                 startPos = Math.max(0, Math.min(1, startPos));
                                 endPos = Math.max(0, Math.min(1, endPos));
 
-                                gradient.addColorStop(startPos, color);
-                                gradient.addColorStop(endPos, color);
+                                // start of segment
+                                if (segment.startDose === minDose) {
+                                    // start of segment (fade in)
+                                    gradient.addColorStop(Math.max(0, startPos - (endPos - startPos) / 2), bodyStyles.getPropertyValue('--chart-transparent'));
+                                    gradient.addColorStop(startPos, color);
+                                    gradient.addColorStop(endPos, color);
+                                } else if (segment.endDose === maxDose) {
+                                    // end of segment (fade out)
+                                    gradient.addColorStop(startPos, color);
+                                    gradient.addColorStop(endPos - ((endPos - startPos) / 2), color);
+                                    gradient.addColorStop(endPos, bodyStyles.getPropertyValue('--chart-transparent'));
+                                } else {
+                                    gradient.addColorStop(startPos, color);
+                                    gradient.addColorStop(endPos, color);
+                                }
                             });
 
                             return gradient;
@@ -763,6 +777,9 @@
                 headerRow.appendChild(roaHeader);
 
                 doseLevels.forEach(function (level) {
+                    // only add header if there's at least one cell with data
+                    if (!roas.some(roa => parsedDoseData[roa][level])) return;
+
                     var th = document.createElement('th');
                     th.textContent = level;
                     headerRow.appendChild(th);
@@ -777,21 +794,26 @@
                     row.appendChild(roaCell);
 
                     doseLevels.forEach(function (level) {
+                        // only add cell if there's at least one value for this dose level across all ROAs
+                        if (!roas.some(r => parsedDoseData[r][level])) return;
+
                         var dose = parsedDoseData[roa][level];
                         var cell = document.createElement('td');
-                        cell.style.backgroundColor = doseColors[level];
-                        cell.style.color = 'var(--text);';
-                        cell.style.padding = '5px';
-                        cell.style.textAlign = 'center';
 
                         if (dose) {
                             cell.textContent = dose.display;
+                            cell.style.backgroundColor = doseColors[level];
                         } else {
                             cell.textContent = 'No data';
                             cell.style.backgroundColor = 'var(--background-darker)';
                         }
+
+                        cell.style.color = 'var(--text)';
+                        cell.style.padding = '5px';
+                        cell.style.textAlign = 'center';
                         row.appendChild(cell);
                     });
+
                     doseTableBody.appendChild(row);
                 });
             }
@@ -837,12 +859,15 @@
 
     <script>
     function renderTimeChart() {
+        // TODO: Add toggle for enabling/disabling the display of after-effects in the chart
+        const shouldDisplayAfterEffects = false;
+
         var ctx = document.getElementById('timeChart').getContext('2d');
-        
+
         // Get timing data
         var timingData = JSON.parse('{{ substance.get("timing", {}) | tojson | safe }}');
         var roas = Object.keys(timingData.onset || {}).filter(roa => roa !== 'value');
-        
+
         // Colors for different phases
         const bodyStyles = getComputedStyle(document.body);
         var phaseColors = {
@@ -862,6 +887,7 @@
         function convertToMinutes(value, unit) {
             if (!value || !unit) return 0;
             switch(unit.toLowerCase()) {
+                case 'seconds': return value / 60;
                 case 'hours': return value * 60;
                 case 'days': return value * 24 * 60;
                 case 'weeks': return value * 7 * 24 * 60;
@@ -892,15 +918,17 @@
         roas.forEach((roa, index) => {
             let dataPoints = [];
             let timeOffset = 0;
-            
+
             // Process onset
             if (timingData.onset && timingData.onset[roa]) {
                 let onset = parseTimeRange(timingData.onset[roa].value);
                 if (onset) {
                     let onsetMinutes = convertToMinutes(onset.max, timingData.onset[roa].unit);
+
                     // Create smooth onset curve with sigmoid-like function
                     for (let i = 0; i <= 20; i++) {
                         let x = (onsetMinutes * i) / 20;
+
                         // Modified sigmoid function for smoother onset
                         let progress = i / 20;
                         let y = peakIntensity / (1 + Math.exp(-12 * (progress - 0.5)));
@@ -913,15 +941,17 @@
 
             // Process duration
             if (timingData.duration && (timingData.duration[roa] || timingData.duration.value)) {
-                let duration = timingData.duration[roa] ? 
+                let duration = timingData.duration[roa] ?
                     parseTimeRange(timingData.duration[roa].value) :
                     parseTimeRange(timingData.duration.value.value);
-                let unit = timingData.duration[roa] ? 
+
+                let unit = timingData.duration[roa] ?
                     timingData.duration[roa].unit :
                     timingData.duration.value.unit;
-                
+
                 if (duration) {
                     let durationMinutes = convertToMinutes(duration.max, unit);
+
                     // Add plateau points - just two points for a straight line
                     dataPoints.push({x: timeOffset, y: peakIntensity});
                     dataPoints.push({x: timeOffset + durationMinutes, y: peakIntensity});
@@ -931,16 +961,18 @@
             }
 
             // Process after-effects with gradual decline
-            if (timingData.aftereffects && (timingData.aftereffects[roa] || timingData.aftereffects.value)) {
-                let aftereffects = timingData.aftereffects[roa] ? 
+            if (shouldDisplayAfterEffects && timingData.aftereffects && (timingData.aftereffects[roa] || timingData.aftereffects.value)) {
+                let aftereffects = timingData.aftereffects[roa] ?
                     parseTimeRange(timingData.aftereffects[roa].value) :
                     parseTimeRange(timingData.aftereffects.value.value);
-                let unit = timingData.aftereffects[roa] ? 
+
+                let unit = timingData.aftereffects[roa] ?
                     timingData.aftereffects[roa].unit :
                     timingData.aftereffects.value.unit;
-                
+
                 if (aftereffects) {
                     let afterMinutes = convertToMinutes(aftereffects.max, unit);
+
                     // Create linear decline
                     dataPoints.push({x: timeOffset, y: peakIntensity});
                     dataPoints.push({x: timeOffset + afterMinutes, y: 0});
@@ -961,7 +993,15 @@
             }
         });
 
+        // double check there's any data prior to creation
+        const chartElement = document.querySelector('.time-course-container');
+        if (!datasets.length) {
+          chartElement.style.display = 'none';
+          return;
+        }
+
         // Create the chart
+        chartElement.style.display = 'block';
         new Chart(ctx, {
             type: 'line',
             data: {
@@ -1137,11 +1177,11 @@
             font-size: 2rem;
             text-align: left;
         }
-        
+
         .data-source-switcher {
             padding: 0.5rem 0.75rem;
         }
-        
+
         .data-source-switcher select {
             min-width: 80px;
         }
@@ -1173,6 +1213,7 @@
         background: var(--background-secondary);
         border-radius: 0.75rem;
         padding: 1.5rem;
+        padding-left: 0;
         margin: 1rem 0;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
@@ -1303,7 +1344,7 @@
             margin: 0.5rem 0;
             padding: 1rem;
         }
-        
+
         button.collapsible.active + .content {
             padding: 1rem;
         }
