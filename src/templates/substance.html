@@ -499,12 +499,30 @@
                 }
 
                 // Handle min/max object
-                if (doseValue.min !== undefined && doseValue.max !== undefined) {
+                // if no min/max data then just return null
+                if (doseValue.min == undefined && doseValue.max == undefined) {
+                    return null;
+                }
+
+                /* min OR max can be set seemingly, so need to check each property */
+                // set doseValue.max if min set
+                if (doseValue.min != undefined && doseValue.max == undefined) {
+                    doseValue.max = doseValue.min;
+                }
+
+                // set doseValue.min if max set
+                if (doseValue.min == undefined && doseValue.max != undefined) {
+                    doseValue.min = doseValue.max;
+                }
+
+                if (doseValue.min != undefined && doseValue.max != undefined) {
                     return {
                         low: doseValue.min,
                         high: doseValue.max,
                         unit: unit,
-                        display: doseValue.min + '-' + doseValue.max + ' ' + unit
+                        display: doseValue.min !== doseValue.max ?
+                            doseValue.min + ' - ' + doseValue.max + ' ' + unit :
+                            doseValue.min + ' ' + unit
                     };
                 }
 
