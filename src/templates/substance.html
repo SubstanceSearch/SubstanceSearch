@@ -515,18 +515,14 @@
                     doseValue.min = doseValue.max;
                 }
 
-                if (doseValue.min != undefined && doseValue.max != undefined) {
-                    return {
-                        low: doseValue.min,
-                        high: doseValue.max,
-                        unit: unit,
-                        display: doseValue.min !== doseValue.max ?
-                            doseValue.min + ' - ' + doseValue.max + ' ' + unit :
-                            doseValue.min + ' ' + unit
-                    };
-                }
-
-                return null;
+                return {
+                    low: doseValue.min,
+                    high: doseValue.max,
+                    unit: unit,
+                    display: doseValue.min !== doseValue.max ?
+                        doseValue.min + ' - ' + doseValue.max + ' ' + unit :
+                        doseValue.min + ' ' + unit
+                };
             }
 
             // Step 1: Parse all doses and collect units used
@@ -754,7 +750,13 @@
                             position: 'bottom',
                             labels: {
                                 generateLabels: function (chart) {
-                                    return doseLevels.map(function (level) {
+                                    return doseLevels
+                                    .filter(level => {
+                                      // check if any data for this level exists
+                                      // just so we don't create redundant legends
+                                      return roas.some(roa => parsedDoseData[roa][level])
+                                    })
+                                    .map(function (level) {
                                         return {
                                             text: level,
                                             fontColor: bodyStyles.getPropertyValue('--chart-text'),
