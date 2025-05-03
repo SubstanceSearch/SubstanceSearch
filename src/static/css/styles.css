@@ -90,9 +90,23 @@ body.dark {
 body {
 	font-family: "Helvetica Neue", sans-serif;
 	background-color: var(--background);
-    color: var(--text);
+  color: var(--text);
 	margin: 0;
 	padding: 0;
+}
+
+::-webkit-scrollbar {
+  height: 4px;
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
 }
 
 .container {
