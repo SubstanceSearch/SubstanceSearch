@@ -2,7 +2,8 @@ body,
 body.light {
 	color-scheme: light;
 	--background: #f9f9f9;
-	--background-hover: #e0e0e0;
+  --background-secondary: #ebebeb;
+  --background-hover: #e0e0e0;
 	--background-darker: #f0f0f0;
 	--background-darker-alt: #f2f2f2;
 	--text: #333;
@@ -45,6 +46,7 @@ body.light {
 body.dark {
 	color-scheme: dark;
 	--background: #121212;
+  --background-secondary: #1e1e1e;
 	--background-hover: #444;
 	--background-darker: #333;
 	--background-darker-alt: #363636;

@@ -80,8 +80,8 @@
 
         <!-- Dose chart & table -->
         {% if substance.get('dosage', {}).get('routes') %}
+        <h2>Dose Information</h2>
         <div class="dose-info-container">
-            <h2>Dose Information</h2>
             <div class="chart-table-container">
                 <div class="chart-container">
                     <canvas id="doseChart" style="max-height: 250px; width: 100%;"></canvas>
@@ -98,11 +98,12 @@
         {% endif %}
 
         <!-- Onset, Duration & After-effects -->
+        {% if substance.get('timing') and (substance['timing'].get('onset') or substance['timing'].get('duration') or substance['timing'].get('aftereffects')) %}
+        <h2>Onset, Duration & After-effects</h2>
         <div class="onset-duration-container">
             <div class="onset-duration-box">
-            <h2>Onset, Duration & After-effects</h2>
             <ul>
-                {% if substance.get('timing', {}).get('onset') %}
+                {% if substance['timing'].get('onset') %}
                 <li><strong>Onset:</strong>
                     <ul>
                         {% if substance['timing']['onset'].get('value') %}
@@ -118,7 +119,7 @@
                 </li>
                 {% endif %}
 
-                {% if substance.get('timing', {}).get('duration') %}
+                {% if substance['timing'].get('duration') %}
                 <li><strong>Duration:</strong>
                     <ul>
                         {% if substance['timing']['duration'].get('value') %}
@@ -134,7 +135,7 @@
                 </li>
                 {% endif %}
 
-                {% if substance.get('timing', {}).get('aftereffects') %}
+                {% if substance['timing'].get('aftereffects') %}
                 <li><strong>After-effects:</strong>
                     <ul>
                         {% if substance['timing']['aftereffects'].get('value') %}
@@ -153,15 +154,14 @@
             </div>
 
             <!-- Time Course Graph -->
-            {% if substance.get('timing') %}
             <div class="time-course-container">
                 <div class="chart-container">
                     <canvas id="timeChart" style="max-height: 250px; width: 100%;"></canvas>
                     <div id="timeLegend" class="time-legend"></div>
                 </div>
             </div>
-            {% endif %}
         </div>
+        {% endif %}
 
         <!-- Effects Section -->
         {% if substance.get('effects') or substance.get('effects_detailed') %}
@@ -1112,7 +1112,7 @@
 
     <style>
     .substance-page {
-        padding: 2rem;
+        /*padding: 2rem;*/
         max-width: 1200px;
         margin: 0 auto;
     }
@@ -1241,6 +1241,7 @@
         padding-left: 0;
         margin: 1rem 0;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: auto;
     }
 
     /* Effects Section */
@@ -1474,7 +1475,7 @@
 
     @media (max-width: 768px) {
         .substance-page {
-            padding: 1rem;
+            /*padding: 1rem;*/
             overflow-x: hidden;  /* Prevent horizontal scrolling */
             width: 100%;
             max-width: 100vw;
@@ -1498,7 +1499,7 @@
         .combo-box,
         .sources-section,
         .content {
-            background: none;
+            /*background: none;*/
             box-shadow: none;
             padding: 0.75rem 0;
             margin: 0.5rem 0;
@@ -1539,27 +1540,22 @@
         .note-banner {
             padding: 0.75rem;
             margin: 0.5rem 0;
-            border-radius: 0;
         }
 
         .combo-box {
             padding: 0.75rem;
             margin: 0.5rem 0;
-            border-radius: 0;
         }
 
         .modern-link {
             width: 100%;
             padding: 0.75rem 0;
-            background: none;
             box-shadow: none;
         }
 
         button.collapsible {
             padding: 0.75rem;
             margin-top: 0.5rem;
-            border-radius: 0;
-            background: none;
         }
 
         .content {
@@ -1585,7 +1581,7 @@
             margin: 1rem -1rem;
             padding: 0 1rem;
             width: calc(100% + 2rem);
-            overflow-x: auto;
+            overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
         }
 

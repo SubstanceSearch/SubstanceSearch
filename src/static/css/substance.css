@@ -405,7 +405,7 @@ th {
 	.substance-info {
 		width: 100%;
 		text-align: left;
-		padding: 0 15px;
+		/* padding: 0 15px; */
 	}
 
 	.category-link {
