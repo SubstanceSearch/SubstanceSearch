@@ -400,6 +400,7 @@
                 font-size: 1rem;
                 border-radius: 0.5rem;
                 margin-top: 0.5rem;
+                margin-bottom: 0;
                 transition: background-color 0.2s;
             }
 
@@ -424,7 +425,13 @@
             }
 
             button.collapsible + div.content {
+              margin-top: 0;
               background-color: var(--background-secondary);
+            }
+
+            button.collapsible + div.content > div:first-of-type,
+            button.collapsible + div.content > p:first-of-type {
+              margin-top: 0;
             }
             </style>
         {% endif %}
