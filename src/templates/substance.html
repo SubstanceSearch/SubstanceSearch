@@ -455,11 +455,11 @@
 
     <!-- JavaScript for Dosage Chart -->
     <script>
-        let chart;
-        let shouldAnimate = true;
+        let dosageChart;
+        let shouldAnimateDosageChart = true;
 
         function renderDosageChart() {
-            if (chart) chart?.destroy?.();
+            if (dosageChart) dosageChart?.destroy?.();
             var ctx = document.getElementById('doseChart').getContext('2d');
 
             // Fetch dose data from routes
@@ -625,7 +625,7 @@
             });
 
             // Configure the chart
-            chart = new Chart(ctx, {
+            dosageChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: roas,
@@ -700,7 +700,7 @@
                     }]
                 },
                 options: {
-                    animation: shouldAnimate,
+                    animation: shouldAnimateDosageChart,
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
@@ -859,7 +859,7 @@
             const observer = new MutationObserver(function (mutations) {
                 mutations.forEach(function (mutation) {
                     if (mutation.attributeName === 'class') {
-                        shouldAnimate = false;
+                        shouldAnimateDosageChart = false;
                         renderDosageChart();
                     }
                 });
@@ -875,7 +875,7 @@
             window.addEventListener('resize', (ev) => {
                 if (lastX === window.innerWidth) return;
                 lastX = window.innerWidth;
-                shouldAnimate = false;
+                shouldAnimateDosageChart = false;
                 debounce(renderDosageChart, 250);
             });
         });
@@ -890,11 +890,24 @@
     </script>
 
     <script>
+    let timeChart;
+    let shouldAnimateTimeChart = true;
+
     function renderTimeChart() {
         // TODO: Add toggle for enabling/disabling the display of after-effects in the chart
         const DISPLAY_AFTER_EFFECTS = false;
 
-        var ctx = document.getElementById('timeChart').getContext('2d');
+        const chartElem = document.getElementById('timeChart');
+        if (!chartElem) return;
+
+        // destroy existing chart
+        if (timeChart) timeChart?.destroy?.();
+
+        var ctx = chartElem.getContext('2d');
+        if (!ctx) {
+          console.error('Failed to get context for timeChart');
+          return;
+        }
 
         // Get timing data
         var timingData = JSON.parse('{{ substance.get("timing", {}) | tojson | safe }}');
@@ -1034,12 +1047,13 @@
 
         // Create the chart
         chartElement.style.display = 'block';
-        new Chart(ctx, {
+        timeChart = new Chart(ctx, {
             type: 'line',
             data: {
                 datasets: datasets
             },
             options: {
+                animation: shouldAnimateTimeChart,
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
@@ -1111,10 +1125,33 @@
 
     // Call renderTimeChart when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
-        if (document.getElementById('timeChart')) {
-            renderTimeChart();
-        }
+        renderTimeChart()
+
+        // watches for theme changes on the body elem
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                if (mutation.attributeName === 'class') {
+                    shouldAnimateTimeChart = false;
+                    renderTimeChart();
+                }
+            });
+        });
+
+        observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+
+        // re-render whenever the window has finished resizing
+        let lastX = window.innerWidth;
+        window.addEventListener('resize', (ev) => {
+            if (lastX === window.innerWidth) return;
+            lastX = window.innerWidth;
+            shouldAnimateTimeChart = false;
+            debounce(renderTimeChart, 250);
+        });
     });
+
     </script>
 
     <style>
@@ -1245,7 +1282,6 @@
         background: var(--background-secondary);
         border-radius: 0.75rem;
         padding: 1.5rem;
-        padding-left: 0;
         margin: 1rem 0;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         overflow: auto;
@@ -1508,7 +1544,7 @@
         .content {
             /*background: none;*/
             box-shadow: none;
-            padding: 0.75rem 0;
+            padding: 0.75rem;
             margin: 0.5rem 0;
         }
 
@@ -1570,8 +1606,10 @@
         }
 
         .chart-table-container {
-            margin: 1rem -1rem;  /* Negative margin to allow full width */
-            padding: 0 1rem;
+            margin: 0;
+            padding: 0 1.5rem;
+            /*margin: 1rem -1rem;   Negative margin to allow full width
+            padding: 0 1rem;*/
             width: 100vw;
             max-width: 100vw;
         }
